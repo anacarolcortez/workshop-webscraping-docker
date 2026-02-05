@@ -14,6 +14,7 @@ Você só precisa de uma coisa instalada:
 1. Baixe o projeto
 
 Faça o download do código e abra a pasta no seu terminal favorito ou no VS Code.
+
 2. Prepare o ambiente
 
 No terminal, dentro da pasta do projeto, digite o seguinte comando:
@@ -24,7 +25,7 @@ docker compose up -d
 
 Este comando vai baixar as imagens necessárias e preparar os "computadores virtuais" (containers) para o nosso código.
 
-3.Abra o browser do container
+3. Abra o browser do container
 
 📺 Como o Selenium está rodando dentro de um container, você não verá uma janela do Chrome pulando na sua tela. Mas você pode assistir ao processo por "dentro" do Docker:
 
