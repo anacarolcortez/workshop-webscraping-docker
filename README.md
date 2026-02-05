@@ -24,17 +24,9 @@ docker compose up -d
 
 Este comando vai baixar as imagens necessárias e preparar os "computadores virtuais" (containers) para o nosso código.
 
-3. Rode o código
+3.Abra o browser do container
 
-Agora, para executar o nosso script de raspagem de dados, rode:
-
-```
-docker compose run app poetry run python main.py
-```
-
-📺 Como ver o navegador funcionando?
-
-Como o Selenium está rodando dentro de um container, você não verá uma janela do Chrome pulando na sua tela. Mas você pode assistir ao processo por "dentro" do Docker:
+📺 Como o Selenium está rodando dentro de um container, você não verá uma janela do Chrome pulando na sua tela. Mas você pode assistir ao processo por "dentro" do Docker:
 
     Abra o seu navegador (Chrome, Edge, Firefox...) e digite: http://localhost:7900
 
@@ -43,6 +35,16 @@ Como o Selenium está rodando dentro de um container, você não verá uma janel
     Se pedir uma senha, digite: secret
 
     Pronto! Você verá a tela do Linux do container onde o Chrome está rodando.
+
+4. Rode o código
+
+Agora, para executar o nosso script de raspagem de dados, rode:
+
+```
+docker compose run app poetry run python main.py
+```
+
+Vá ao browser do container e veja o navegador sendo comandado ao vivo pelo Selenium :)
 
 🛠️ Comandos Úteis
 
