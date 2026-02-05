@@ -1,0 +1,16 @@
+services:
+  chrome:
+    image: selenium/standalone-chrome:latest
+    shm_size: 2gb
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+
+  app:
+    build: .
+    volumes:
+      - .:/app
+    depends_on:
+      - chrome
+    environment:
+      - PYTHONUNBUFFERED=1
