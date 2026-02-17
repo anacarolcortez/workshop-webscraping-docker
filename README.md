@@ -13,7 +13,7 @@ Você só precisa de uma coisa instalada:
 🚀 Como começar
 1. Baixe o projeto
 
-Faça o download do código e abra a pasta no seu terminal favorito ou no VS Code.
+Faça o download do código e abra a pasta na sua IDE (recomendo o VS Code).
 
 2. Prepare o ambiente
 
