@@ -55,10 +55,20 @@ Vá ao browser do container e veja o navegador sendo comandado ao vivo pelo Sele
 
 📝 O que vamos aprender?
 
-    Como navegar em páginas dinâmicas.
+* Como navegar em páginas dinâmicas.
 
-    Como encontrar elementos (botões, inputs, textos).
+* Como encontrar elementos (botões, inputs, textos).
 
-    Como lidar com esperas implícitas e explícitas.
+* Como lidar com esperas implícitas e explícitas.
 
-    Boas práticas para não ser bloqueada.
+* Boas práticas para não ser bloqueada.
+
+Para este workshop, vamos usar como exemplo o site da Imprensa Nacional, o Diário Oficial da União.
+
+Vamos fazer uma busca pela palavra-chave "materiais didáticos", e usar filtros para selecionar contratos firmados com o Ministério da Educação em 2025.
+
+Vamos salvar as informações de cada contrato obtido em um arquivo no formato csv, ideal para futura análise de dados.
+
+Este exemplo é bem interessante porque traz todos os exemplos necessários para webscraping em qualquer site, como captura de elementos no DOM do HTML, interação com eles (clicar, inserir textos, mudar de página, copiar texto).
+
+Na pasta "conteudo" deste repositório, apresento o código que vamos escrever no workshop e o csv resultante. Mas o objetivo deste repositório é apresentar uma forma simples e genérica de conseguir rodar o Selenium em qualquer computador por meio de um ambiente virtual. Afinal, o Colab é muito limitado para webscraping, pois costuma ser barrado pelos firewalls dos sites. Para isso, escreva os códigos do seu projeto no arquivo main.py.
