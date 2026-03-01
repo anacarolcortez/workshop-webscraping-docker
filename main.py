@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -123,8 +124,11 @@ def executar(driver):
     
     # Paginação
     todos_registros = []
-    btn_ultima_pg = wait.until(EC.presence_of_element_located((By.ID, "lastPage")))
-    total_paginas = int(btn_ultima_pg.text)
+    try:
+        btn_ultima_pg = wait.until(EC.presence_of_element_located((By.ID, "lastPage")))
+        total_paginas = int(btn_ultima_pg.text)
+    except Exception as e:
+        total_paginas = 1
 
     for pagina in range(1, total_paginas + 1):
         print(f"Processando página {pagina} de {total_paginas}...")
@@ -135,11 +139,10 @@ def executar(driver):
             esperar_e_clicar(wait, By.ID, "rightArrow")
             # Aguarda a transição de página
             wait.until(EC.staleness_of(btn_ultima_pg)) 
-            btn_ultima_pg = wait.until(EC.presence_of_element_located((By.ID, "lastPage")))
 
     # Salvar Dados
     df = pd.DataFrame(todos_registros)
-    df.to_csv('contratos_mec_2025.csv', index=False, encoding='utf-8')
+    df.to_csv('dados/contratos_mec_2025.csv', index=False, encoding='utf-8')
     print(f"Sucesso! {len(todos_registros)} registros salvos.")
 
 def main():
@@ -151,6 +154,8 @@ def main():
         command_executor='http://chrome:4444/wd/hub',
         options=options
     )
+
+    os.makedirs('dados', exist_ok=True)
 
     try:
         executar(driver)
