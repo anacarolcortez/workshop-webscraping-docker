@@ -3,9 +3,10 @@ import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 
 # Configuração de Regex
 CAMPOS_RE = {
@@ -45,6 +46,19 @@ def extrair_dados_texto(texto):
         dados[campo] = match.group(1).strip().rstrip(".") if match else None
     return dados
 
+def selecionar_data(driver, data_inicio, data_fim):
+    """Injeta as datas diretamente via JavaScript para contornar o date picker do site."""
+    driver.execute_script(f"""
+        var dtInicio = document.getElementById('data-inicio');
+        var dtFim = document.getElementById('data-fim');
+        
+        dtInicio.value = '{data_inicio}';
+        dtFim.value = '{data_fim}';
+        
+        dtInicio.dispatchEvent(new Event('change'));
+        dtFim.dispatchEvent(new Event('change'));
+    """)
+
 # Pesquisa e Extração
 
 def realizar_pesquisa(driver, wait):
@@ -53,25 +67,21 @@ def realizar_pesquisa(driver, wait):
     
     # Busca e filtros básicos
     esperar_e_preencher(wait, By.ID, "search-bar", "material didático")
-    esperar_e_clicar(wait, By.ID, "toggle-search-advanced")
+    esperar_e_clicar(wait, By.ID, "toggle-search-advanced") # Expande opções avançadas
     esperar_e_clicar(wait, By.ID, "tipo-pesquisa-1") # Resultado Exato
     
-    # Configuração de Datas (Via JS para evitar bugs de headless/calendário)
-    driver.execute_script("""
-        document.getElementById('data-inicio').value = '01/01/2025';
-        document.getElementById('data-fim').value = '31/12/2025';
-        document.getElementById('data-inicio').dispatchEvent(new Event('change'));
-        document.getElementById('data-fim').dispatchEvent(new Event('change'));
-    """)
+    # Data personalizada
+    esperar_e_clicar(wait, By.ID, "personalizado")
+    selecionar_data(driver, "01/01/2025", "31/12/2025")
     
-    esperar_e_clicar(wait, By.ID, "do3") # Seção 3
+    esperar_e_clicar(wait, By.ID, "do3") # Seção 3 (contratos, licitações etc.)
     esperar_e_clicar(wait, By.XPATH, "//button[normalize-space()='PESQUISAR']")
 
     # Filtros avançados pós-busca
-    esperar_e_clicar(wait, By.ID, "artTypeAction")
+    esperar_e_clicar(wait, By.ID, "artTypeAction") # Filtro de Tipo de Documento
     executar_script_filtro(driver, 'artType', 'Extrato de Contrato')
     
-    esperar_e_clicar(wait, By.ID, "orgPrinAction")
+    esperar_e_clicar(wait, By.ID, "orgPrinAction") # Filtro de Órgão Principal
     executar_script_filtro(driver, 'orgPrin', 'Ministério da Educação')
 
 def raspar_pagina_atual(driver, wait):
