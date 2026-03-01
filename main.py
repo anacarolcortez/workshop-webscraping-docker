@@ -1,10 +1,136 @@
+import re
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 
+# Configuração de Regex
+CAMPOS_RE = {
+    "processo": r"Nº Processo:\s*(.*?)(?=Inexigibilidade|Contratante:)",
+    "contratante": r"Contratante:\s*(.*?)(?=Contratado:)",
+    "contratado": r"Contratado:\s*(.*?)(?=Objeto:)",
+    "objeto": r"Objeto:\s*(.*?)(?=Fundamento Legal:|Vigência:)",
+    "vigencia": r"Vigência:\s*(.*?)(?=Valor Total:)",
+    "valor_total": r"Valor Total:\s*(.*?)(?=Data de Assinatura:)",
+    "data_assinatura": r"Data de Assinatura:\s*(.*?)(?=\(|$)"
+}
+
+# Funções de Interação e Extração
+
+def esperar_e_clicar(wait, by, locator):
+    """Aguarda o elemento ficar clicável e clica."""
+    elemento = wait.until(EC.element_to_be_clickable((by, locator)))
+    elemento.click()
+    return elemento
+
+def esperar_e_preencher(wait, by, locator, texto):
+    """Aguarda o campo, limpa e digita o texto."""
+    elemento = wait.until(EC.presence_of_element_located((by, locator)))
+    elemento.clear()
+    elemento.send_keys(texto)
+    return elemento
+
+def executar_script_filtro(driver, facet, valor):
+    """Executa o JS específico do site para aplicar filtros ocultos."""
+    driver.execute_script(f"updateFacet('{facet}', '{valor}', '');")
+
+def extrair_dados_texto(texto):
+    """Aplica regex no texto bruto para extrair dicionário de dados."""
+    dados = {}
+    for campo, padrao in CAMPOS_RE.items():
+        match = re.search(padrao, texto, re.IGNORECASE | re.DOTALL)
+        dados[campo] = match.group(1).strip().rstrip(".") if match else None
+    return dados
+
+# Pesquisa e Extração
+
+def realizar_pesquisa(driver, wait):
+    """Centraliza as interações de preenchimento do formulário."""
+    print("Preenchendo critérios de busca...")
+    
+    # Busca e filtros básicos
+    esperar_e_preencher(wait, By.ID, "search-bar", "material didático")
+    esperar_e_clicar(wait, By.ID, "toggle-search-advanced")
+    esperar_e_clicar(wait, By.ID, "tipo-pesquisa-1") # Resultado Exato
+    
+    # Configuração de Datas (Via JS para evitar bugs de headless/calendário)
+    driver.execute_script("""
+        document.getElementById('data-inicio').value = '01/01/2025';
+        document.getElementById('data-fim').value = '31/12/2025';
+        document.getElementById('data-inicio').dispatchEvent(new Event('change'));
+        document.getElementById('data-fim').dispatchEvent(new Event('change'));
+    """)
+    
+    esperar_e_clicar(wait, By.ID, "do3") # Seção 3
+    esperar_e_clicar(wait, By.XPATH, "//button[normalize-space()='PESQUISAR']")
+
+    # Filtros avançados pós-busca
+    esperar_e_clicar(wait, By.ID, "artTypeAction")
+    executar_script_filtro(driver, 'artType', 'Extrato de Contrato')
+    
+    esperar_e_clicar(wait, By.ID, "orgPrinAction")
+    executar_script_filtro(driver, 'orgPrin', 'Ministério da Educação')
+
+def raspar_pagina_atual(driver, wait):
+    """Itera sobre os links da página de resultados e extrai os dados."""
+    registros_pagina = []
+    
+    # Localiza todos os links de resultados
+    selector_links = (By.XPATH, "//div[@class='resultados-wrapper']//a")
+    wait.until(EC.presence_of_all_elements_located(selector_links))
+    
+    # Quantidade de links na página
+    total_links = len(driver.find_elements(*selector_links))
+
+    for i in range(total_links):
+        # Re-localiza os links para evitar StaleElementReferenceException
+        links = wait.until(EC.presence_of_all_elements_located(selector_links))
+        link = links[i]
+        
+        # Abre o documento
+        ActionChains(driver).move_to_element(link).pause(0.2).click().perform()
+        
+        # Extração
+        paragrafos = driver.find_elements(By.CSS_SELECTOR, "p.dou-paragraph")
+        texto_completo = " ".join(p.text for p in paragrafos)
+        registros_pagina.append(extrair_dados_texto(texto_completo))
+        
+        # Volta e aguarda recarregar
+        driver.back()
+        wait.until(EC.presence_of_all_elements_located(selector_links))
+        
+    return registros_pagina
+
+def executar(driver):
+    """Agrega a lógica de execução principal: navegação, pesquisa, extração e salvamento."""
+    wait = WebDriverWait(driver, 15)
+    driver.get("https://in.gov.br/acesso-a-informacao/dados-abertos/base-de-dados")
+    
+    realizar_pesquisa(driver, wait)
+    
+    # Paginação
+    todos_registros = []
+    btn_ultima_pg = wait.until(EC.presence_of_element_located((By.ID, "lastPage")))
+    total_paginas = int(btn_ultima_pg.text)
+
+    for pagina in range(1, total_paginas + 1):
+        print(f"Processando página {pagina} de {total_paginas}...")
+        dados_pg = raspar_pagina_atual(driver, wait)
+        todos_registros.extend(dados_pg)
+        
+        if pagina < total_paginas:
+            esperar_e_clicar(wait, By.ID, "rightArrow")
+            # Aguarda a transição de página
+            wait.until(EC.staleness_of(btn_ultima_pg)) 
+            btn_ultima_pg = wait.until(EC.presence_of_element_located((By.ID, "lastPage")))
+
+    # Salvar Dados
+    df = pd.DataFrame(todos_registros)
+    df.to_csv('contratos_mec_2025.csv', index=False, encoding='utf-8')
+    print(f"Sucesso! {len(todos_registros)} registros salvos.")
 
 def main():
     options = Options()
@@ -20,18 +146,6 @@ def main():
         executar(driver)
     finally:
         driver.quit()
-
-
-def executar(driver):
-    #Confiugurar o WebDriverWait para aguardar até 15 segundos por elementos
-    wait = WebDriverWait(driver, 15)
-
-    #Acessar a página de dados abertos da Imprensa Nacional
-    driver.get("https://in.gov.br/acesso-a-informacao/dados-abertos/base-de-dados")
-    print("Página carregada:", driver.title)
-
-    #Aqui desenvolver o restante do código
-
 
 if __name__ == "__main__":
     main()

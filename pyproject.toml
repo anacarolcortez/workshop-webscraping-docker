@@ -1,16 +1,20 @@
 [project]
 name = "workshop-selenium"
 version = "0.1.0"
-description = ""
+description = "Workshop de Webscraping com Selenium e Docker"
 authors = [
-    {name = "anacarolcortez",email = "anacarolcortez@hotmail.com"}
+    {name = "anacarolcortez", email = "anacarolcortez@hotmail.com"}
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "selenium (>=4.40.0,<5.0.0)"
+    "selenium>=4.20.0",
+    "pandas>=2.2.0"
 ]
 
+[tool.poetry]
+# Necessário para que o Poetry entenda que não é um pacote para distribuição
+package-mode = false 
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
