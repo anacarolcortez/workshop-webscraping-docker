@@ -35,9 +35,6 @@ def esperar_e_preencher(wait, by, locator, texto):
     elemento.send_keys(texto)
     return elemento
 
-def executar_script_filtro(driver, facet, valor):
-    """Executa o JS específico do site para aplicar filtros ocultos."""
-    driver.execute_script(f"updateFacet('{facet}', '{valor}', '');")
 
 def extrair_dados_texto(texto):
     """Aplica regex no texto bruto para extrair dicionário de dados."""
@@ -74,16 +71,18 @@ def realizar_pesquisa(driver, wait):
     # Data personalizada
     esperar_e_clicar(wait, By.ID, "personalizado")
     selecionar_data(driver, "01/01/2025", "31/12/2025")
-    
-    esperar_e_clicar(wait, By.ID, "do3") # Seção 3 (contratos, licitações etc.)
+
+    # Seção 3 (contratos, licitações etc.)
+    esperar_e_clicar(wait, By.ID, "do3") 
     esperar_e_clicar(wait, By.XPATH, "//button[normalize-space()='PESQUISAR']")
 
     # Filtros avançados pós-busca
-    esperar_e_clicar(wait, By.ID, "artTypeAction") # Filtro de Tipo de Documento
-    executar_script_filtro(driver, 'artType', 'Extrato de Contrato')
-    
     esperar_e_clicar(wait, By.ID, "orgPrinAction") # Filtro de Órgão Principal
-    executar_script_filtro(driver, 'orgPrin', 'Ministério da Educação')
+    esperar_e_clicar(wait, By.XPATH, "//a[contains(text(), 'Ministério da Educação')]")
+
+    esperar_e_clicar(wait, By.ID, "artTypeAction") # Filtro de Tipo de Documento
+    esperar_e_clicar(wait, By.XPATH, "//a[contains(text(), 'Extrato de Contrato')]")
+
 
 def raspar_pagina_atual(driver, wait):
     """Itera sobre os links da página de resultados e extrai os dados."""
